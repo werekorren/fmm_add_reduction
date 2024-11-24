@@ -14,6 +14,7 @@ As optional output, it is possible to print both the input and output algorithms
 For additional details, please refer to the paper.
 
 
+# Sample output
 Sample output when run with default parameters on the Laderman algorithm:
 
 Using file algorithms/other/Laderman-333-23-98.txt

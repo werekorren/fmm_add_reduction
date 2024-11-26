@@ -46,11 +46,11 @@ static int read_params_from_file_name(const char *file_name, int *zp, int *k, in
   /* get q */
   char *pp = strchr(p + 1, '-');
   if (!pp) {
-    return 4; // could not find second dash delimiter in file name
+    return 3; // could not find second dash delimiter in file name
   }
   char *ppp = strchr(pp + 1, '-');
   if (!ppp) {
-    return 5; // could not find third dash delimiter in file name
+    return 4; // could not find third dash delimiter in file name
   }
   char t[256];
   int q_len = (int)(ppp - pp - 1);
@@ -76,6 +76,9 @@ static char *skip_to_next_integer(char *buf) {
 static int read_alg_from_grey_file(const char *file_name, fmm_alg *alg, int verbose) {
   FILE *f = fopen(file_name, "r");
   if (!f) {
+    if (verbose) {
+      printf("Could not open Grey txt file %s\n", file_name);
+    }
     return 1;
   }
 
@@ -139,7 +142,7 @@ static int read_alg_from_moosbauer_m_file(const char *file_name, fmm_alg *alg, i
   FILE *f = fopen(file_name, "r");
   if (!f) {
     if (verbose) {
-      printf("Could not open file %s\n", file_name);
+      printf("Could not open Moosbauer m file %s\n", file_name);
     }
     return 1; // could not open file
   }
@@ -157,9 +160,9 @@ static int read_alg_from_moosbauer_m_file(const char *file_name, fmm_alg *alg, i
   const int tot_to_read = (alg->k * alg->l + alg->l * alg->m + alg->k * alg->m) * alg->q;
   if (!fgets(line, max_line_len, f)) {
     if (verbose) {
-      printf("Could not read from file %s\n", file_name);
+      printf("Could not read from Moosbauer m file %s\n", file_name);
     }
-    return 1; // could not read from file
+    return 2; // could not read from file
   }
   if (verbose) {
     int len = (int)strlen(line);
@@ -279,7 +282,7 @@ static int read_alg_from_moosbauer_exp_file(const char *file_name, fmm_alg *alg,
   FILE *f = fopen(file_name, "r");
   if (!f) {
     if (verbose) {
-      printf("Could not open file %s\n", file_name);
+      printf("Could not open Moosbauer exp file %s\n", file_name);
     }
     return 1; // could not open file
   }
@@ -323,7 +326,7 @@ static int read_alg_from_moosbauer_exp_file(const char *file_name, fmm_alg *alg,
     if (verbose) {
       printf("Unexpected number of lines in input file %s\n", file_name);
     }
-    return 1; // unexpected number of lines in input file
+    return 2; // unexpected number of lines in input file
   }
 
   fclose(f);

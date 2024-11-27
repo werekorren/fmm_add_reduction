@@ -38,7 +38,7 @@
  *                  ---------------------
  *   Total savings: 599 + 622 + 855 = 2076 additions (70.42%)
  *
- *   Reduction runtime: 46.44 sec
+ *   Reduction runtime: 46.16 sec
  */
 /* A */
 #define ALPHA_START_A     0.13

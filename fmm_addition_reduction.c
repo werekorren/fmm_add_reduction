@@ -111,12 +111,6 @@ void compute_move_value_greedy_vanilla(fmm_matrix *A, int row1, int row2, int *p
   *p = pp;
 }
 
-#if 0
-static void get_fitness_values_for_one_move_set(fmm_matrix *A, int i, int j, int *p, int *n) {
-  assert(i < j && "get_fitness_values_for_one_move_set: unecpected parameters i and j");
-  compute_move_value_greedy_vanilla(A, i, j, p, n);
-}
-#endif
 static void update_move_overlap_values_for_one_move_set(reduction_state *state, fmm_matrix *A, int i, int j) {
   int p, n;
   //get_fitness_values_for_one_move_set(state, A, i, j, &p, &n);
@@ -166,8 +160,12 @@ static void update_all_affected_move_overlap_values(reduction_state *state, fmm_
       if (p > 1 || n > 1) {
         update_move_overlap_values_for_one_move_set(state, A, i, j);
         /* if i OR j is in {row1, row2}, then (i, t-1, op) and (j, t-1, op) may both need to be updated */
-        tv[i] = 1;
-        tv[j] = 1;
+        if (i != row1 && i != row2) { // only if i does not coincide with move indices
+          tv[i] = 1;
+        }
+        if (j != row1 && j != row2) { // only if j does not coincide with move indices
+          tv[j] = 1;
+        }
       }
     }
   }
@@ -226,8 +224,12 @@ static int total_potential_after_new_move(fmm_matrix *A, reduction_parameters *p
 
       if (p > 1 || n > 1) {
         compute_move_value_greedy_vanilla(A, i, j, &p, &n);
-        tv[i] = 1;
-        tv[j] = 1;
+        if (i != row1 && i != row2) {
+          tv[i] = 1;
+        }
+        if (j != row1 && j != row2) {
+          tv[j] = 1;
+        }
       }
       s += p < 2 ? 0 : p - 1; // num saved ops for positive move
       s += n < 2 ? 0 : n - 1; // num saved ops for negative move

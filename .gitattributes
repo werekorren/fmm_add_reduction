@@ -1,0 +1,2 @@
+# specify which files to ignore in order for GitHib to correctly classify language
+algorithms/* linguist-vendored

@@ -1,2 +1,4 @@
 # specify which files to ignore in order for GitHib to correctly classify language
-algorithms/* linguist-vendored
+* linguist-vendored
+*.c linguist-vendored=false
+*.h linguist-vendored=false

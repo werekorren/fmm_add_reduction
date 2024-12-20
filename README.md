@@ -7,6 +7,7 @@ The available strategies for addition reduction are:
  - brute force
  - greedy vanilla
  - greedy potential
+
 This is further described in the paper
 E. Mårtensson, P. Stankovski Wagner, "The Number of the Beast: Reducing Additions in Fast Matrix Multiplication Algorithms for Dimensions up to 666", https://eprint.iacr.org/.
 

@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: fmm_add_reduction
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Paul
+    family-names: Stankovski Wagner
+    affiliation: Lund University
+    orcid: 'https://orcid.org/0000-0002-2002-4240'
+identifiers:
+  - type: url
+    value: 'https://github.com/werekorren/fmm_add_reduction'
+    description: GitHub repository
+repository-code: 'https://github.com/werekorren/fmm_add_reduction'
+abstract: >-
+  C library for reduction of linear operations in fast
+  matrix multiplication algorithms.
+license: CC-BY-NC-SA-4.0
+commit: 951cd93b27aebd5b71b2e1014d7131843cdc7ebb
+date-released: '2025-05-08'

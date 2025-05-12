@@ -8,6 +8,8 @@ The available strategies for addition reduction are:
  - greedy vanilla
  - greedy potential
 
+This is further described in the ACDA25 paper "The Number of the Beast: Reducing Additions in Fast Matrix Multiplication Algorithms for Dimensions up to 666".
+
 Output is a full specification of the addition-reduced algorithm.
 The algorithm is verified (symbolically/algebraically) to output the correct result (the matrix product).
 As optional output, it is possible to print both the input and output algorithms in LaTeX format.

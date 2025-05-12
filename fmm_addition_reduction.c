@@ -92,7 +92,10 @@ void fmm_reduction_move_undo(fmm_matrix *A) {
 void compute_move_value_greedy_vanilla(fmm_matrix *A, int row1, int row2, int *p, int *n) {
   int pp = 0; // count number of matches of type t = A_row1 + A_row2
   int nn = 0; // count number of matches of type t = A_row1 - A_row2
-  for (int i=0; i<(A->cols + A->t); i++) { // for all columns
+  for (int i=0; i<A->cols; i++) { // for all columns in non-t-space
+    /* note: no need to include t-space "to the right" when counting overlaps, as this part of the t-space only specifies the substitutions themselves.
+     * The t-space "below" specifies how the substitution variables are used, and this part of the search space is included when all pairs of variables are considered in move evaluation.
+     */
     int e1 = fmm_matrix_entry(A, row1, i);
     if (e1 == 0) {
       continue;

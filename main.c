@@ -19,7 +19,7 @@
 #define REDUCTION_METHOD reduction_method_greedy_potential
 
 #if 1 /* same alpha paramater domain for A, B and C */
-#define ALPHA_START    0.0
+#define ALPHA_START    0
 #define ALPHA_END      0.5
 #define ALPHA_NUM_STEPS 5
 #else
@@ -38,7 +38,7 @@
  *                  ---------------------
  *   Total savings: 599 + 622 + 855 = 2076 additions (70.42%)
  *
- *   Reduction runtime: 46.16 sec
+ *   Reduction runtime: 42.13 sec
  */
 /* A */
 #define ALPHA_START_A     0.13
@@ -104,13 +104,13 @@
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-255-40-mod0.m"; // 682 -> 323/313, (0.10,0.12,0.06)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-266-56-mod0.m"; // 1133 -> 442/419, (0.2,0.1,0.08)
 
-//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-334-29-mod0.m"; // 202 -> 107/105, (0.01,0.43,0)
-//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-335-36-mod0.m"; // 370 -> 181/176, (0.01,0.24,0.1)
+//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-334-29-mod0.m"; // 202 -> 107/105, (0.1,0.5,0)
+//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-335-36-mod0.m"; // 370 -> 181/176, (0.1,0.3,0.1)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-336-42-mod0.m"; // 728 -> 274/264, (0,0.136,0.065)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-344-38-mod0.m"; // 401 -> 205/198, (0.2,0.145,0.17)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-345-47-mod0.m"; // 714 -> 284/276, (0,0.105,0.075)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-346-56-mod0.m"; // 795 -> 325/319, (0.235,0,0.085)
-//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-355-58-mod0.m"; // 689 -> 331/330, (0,0,0.1)
+//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-355-58-mod0.m"; // 689 -> 331/326, (0,0.174.0.07)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-356-71-mod0.m"; // 950 -> 399/386, (0.255,0.11,0.14)
 
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-444-49-mod0.m"; // 629 -> 335/325, (0.215,0.24,0.115)
@@ -122,6 +122,12 @@
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-555-97-mod0.m"; // 1,710 -> 729/701, (0.002,0.162,0.061)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-555-97-mod0a.m"; // 2,208 -> 886/852, (0.002,0.087,0.056)
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-556-116-mod0.m"; // 1,990 -> 747/712, (0.002,0.119,0.07)
+
+/* Moosbauer symmetric flip lifted */
+//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-555-93-mod0.exp" // 1,031 -> 450/427, (0.15, 0.15, 0.01)
+//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-666-153-mod0.exp" // 2,261  -> 739/712, (0.1407, 0.0962, 0.0625)
+//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "MoosbauerPooleKemper-555-93-mod0.exp"; // 1013 -> 442/424, (315 + 315 + 383)/(118 + 120 + 186), ( 0.18, 0.14, 0.063)
+//#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "MoosbauerPooleKemper-666-153-mod0.exp"; // 2232 -> 704/681, (705 + 705 + 822)/(188 + 187 + 306), (0.1, 0.11, 0.062)
 
 /* Z_2 */
 //#define DEFAULT_FILE ALG_FOLDER_MOOSBAUER "Moosbauer-226-21-mod2.exp"; // 162 -> 74/71, (0, 0, 0.101)

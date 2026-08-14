@@ -7,7 +7,7 @@
 #include <assert.h>
 
 /* read parameters from file name
- * Assumptions (lots): using Grey txt file format and naming conventions, klm parameters are each single digit, dash used as delimiter in file name and no dashes in path.
+ * Assumptions (lots): using Grey txt file format and naming conventions, klm parameters are each single digit, dash used as delimiter in file name.
  */
 static int read_params_from_file_name(const char *file_name, int *zp, int *k, int *l, int *m, int *q, char * name) {
   int len = strlen(file_name);
@@ -27,13 +27,15 @@ static int read_params_from_file_name(const char *file_name, int *zp, int *k, in
   }
 
   /* get name */
-  p = strchr(file_name, '-'); // find first dash (if any)
+  char *s = strrchr(file_name, '/'); // find last slash (if any)
+  int last_slash_index = s ? (int)(s - file_name) : -1;
+
+  p = strchr(file_name + last_slash_index + 1, '-'); // find first dash (if any)
   if (!p) {
     return 2; // could not find any dash delimiter in file name
   }
   int first_dash_index = (int)(p - file_name);
-  char *s = strrchr(file_name, '/'); // find last slash (if any)
-  int last_slash_index = s ? (int)(s - file_name) : -1;
+
   int name_len = first_dash_index - last_slash_index - 1;
   strncpy(name, file_name + last_slash_index + 1, name_len);
   name[name_len] = 0;

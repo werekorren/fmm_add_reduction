@@ -66,9 +66,12 @@ static void fmm_brute_force_matrix_internal(fmm_matrix *m, int depth, int verbos
   if (a - s >= best_num_ops) { // the number of ops we can save with all actions combined is less than we need to find a better solution
     return; // prune search tree here
   }
+  //if (a >= best_num_ops) { // the number of ops we can save with all actions combined is less than we need to find a better solution
+  //  return; // prune search tree here
+  //}
 
   int t = m->rows + m->t;
-//  int tot = t * (t - 1) / 2;
+  //int tot = t * (t - 1) / 2;
   int iteration = 0;
   for (int i=0; i<t; i++) {
     for (int j=i+1; j<t; j++) {

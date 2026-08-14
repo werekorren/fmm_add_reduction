@@ -4,12 +4,19 @@
 #include "fmm_algorithm_specification.h"
 #include "fmm_addition_reduction.h"
 #include "fmm_brute_force.h"
+#include "fmm_probability_distribution_utils.h"
 #include <time.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
-#define LATEX_PRINT_DEFAULT 0
+#include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#define LATEX_PRINT_DEFAULT 1
 #define VERBOSE_FILE_READ   0
 #define VERBOSE_CORRECTNESS 0
 #define VERBOSE_REDUCTION   2
@@ -21,7 +28,7 @@
 #if 1 /* same alpha paramater domain for A, B and C */
 #define ALPHA_START    0
 #define ALPHA_END      0.5
-#define ALPHA_NUM_STEPS 5
+#define ALPHA_NUM_STEPS 500
 #else
 /* Individual alpha parameter domains for A, B and C */
 /* These sample parameters will run separate alpha values for A, B and C, (a single alpha value per A, B or C matrix)
@@ -71,6 +78,8 @@
 //#define DEFAULT_FILE ALG_FOLDER_OTHER "Strassen-222-7-24.txt"; // 24 -> 15/15
 //#define DEFAULT_FILE ALG_FOLDER_OTHER "Smirnov-333-23-139.txt"; // 84 -> 68/68
 #define DEFAULT_FILE ALG_FOLDER_OTHER "Laderman-333-23-98.txt"; // 98 -> 70/62, (0.1, 0.1, 0.2)
+//#define DEFAULT_FILE ALG_FOLDER_OTHER "Sun-333-23-120.txt"; // 120 -> 59/58 (0, 0, 0.1)
+//#define DEFAULT_FILE ALG_FOLDER_OTHER "hellsbells59-333-23-110.txt"; // 110 -> 59/59 = 15 + 15 + 29, (0, 0, 0)
 /* Z_2 */
 //#define DEFAULT_FILE ALG_FOLDER_OTHER "Adaptive-455-73-mod2.m"; // 1,766 -> 516/480, ( 0.01, 0.072, 0.036)
 //#define DEFAULT_FILE ALG_FOLDER_OTHER "Adaptive-555-94-mod2.m"; // 1,563 -> 507/492, (0.11, 0.132, 0.0255)
@@ -231,8 +240,7 @@ static void get_commandline_args(int argc, char **argv, char *fn, reduction_meth
   }
 }
 
-
-int main(int argc, char **argv) {
+static int fmm_addition_reduction_on_single_algorithm(int argc, char **argv) {
   /* set default parameters */
   const char *file_name = DEFAULT_FILE;
   char fn[256];
@@ -364,4 +372,276 @@ int main(int argc, char **argv) {
   fflush(stdout);
   fmm_alg_destroy(&alg);
   return 0;
+}
+
+static int fmm_greedy_potential_one_liner(char *file, double alpha_start, double alpha_end, int alpha_num_steps, int *naive_add_count, int *reduced_add_count) {
+  /* read algorithm from file */
+  fmm_alg alg;
+  int t_capacity = 10;
+  int read_error;
+  if ((read_error = read_from_file(&alg, file, t_capacity, 0 /* verbosity level */))) {
+    return 1; // could not read algorithm specification data
+  }
+
+  /* verify correctness before reduction */
+  int is_correct = fmm_alg_is_correct(&alg, 0 /* verbosity level */);
+  if (!is_correct) {
+    return 2;
+  }
+
+  /* count naive additions before reduction */
+  fmm_matrix *mm[] = {&alg.A, &alg.B, &alg.C};
+  int a[3], ra[3]; // number of additions before and after reduction
+  for (int i=0; i<3; i++) {
+    a[i] = fmm_matrix_num_additions(mm[i]);
+  }
+
+  /* reduce algorithm */
+  clock_t start = clock();
+  int k1[3], k2[3];
+  for (int i=0; i<3; i++) {
+    find_best_greedy_potential_parameters(mm[i], alpha_start, alpha_end, alpha_num_steps, &k1[i], &k2[i], &ra[i], 0 /* verbosity level */);
+  }
+  clock_t end = clock();
+  float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+
+  /* verify correctness after reduction */
+  is_correct = fmm_alg_is_correct(&alg, 0 /* verbosity level */);
+  if (!is_correct) {
+    return 3;
+  }
+
+  /* print stats */
+  int t = a[0] + a[1] + a[2];
+  int tt = ra[0] + ra[1] + ra[2];
+  if (naive_add_count) {
+    *naive_add_count = t; // export naive addition count
+  }
+  if (reduced_add_count) {
+    *reduced_add_count = tt; // export reduced addition count
+  }
+  printf("%4d + %4d + %4d = %4d ->", a[0], a[1], a[2], t);
+  printf("%4d + %4d + %4d = %4d", ra[0], ra[1], ra[2], tt);
+  printf(" with alpha = ( %f, %f, %f)", (double)k2[0]/k1[0], (double)k2[1]/k1[1], (double)k2[2]/k1[2]);
+  printf(", saving %4d + %4d + %4d = %4d additions (%5.2f%%) [%.3f sec]", a[0] - ra[0], a[1] - ra[1], a[2] - ra[2], t - tt, 100*((double)t - tt)/t, seconds);
+
+  fflush(stdout);
+  fmm_alg_destroy(&alg);
+  return 0;
+}
+
+static int fmm_greedy_vanilla_one_liner(char *file, int *naive_add_count, int *reduced_add_count) {
+  /* read algorithm from file */
+  fmm_alg alg;
+  int t_capacity = 10;
+  int read_error;
+  if ((read_error = read_from_file(&alg, file, t_capacity, 0 /*VERBOSE_FILE_READ*/))) {
+    return 1; // could not read algorithm specification data
+  }
+
+  /* verify correctness before reduction */
+  int is_correct = fmm_alg_is_correct(&alg, 0 /* verbosity level */);
+  if (!is_correct) {
+    return 2;
+  }
+
+  /* count naive additions before reduction */
+  fmm_matrix *mm[] = {&alg.A, &alg.B, &alg.C};
+  int a[3], ra[3]; // number of additions before and after reduction
+  for (int i=0; i<3; i++) {
+    a[i] = fmm_matrix_num_additions(mm[i]);
+  }
+
+  /* reduce algorithm with greedy vanilla */
+  clock_t start = clock();
+  for (int i=0; i<3; i++) {
+    fmm_addition_reduction(mm[i], reduction_method_greedy_vanilla, NULL, 0 /*verbosity_level_reduction*/);
+    ra[i] = fmm_matrix_num_additions(mm[i]);
+  }
+  clock_t end = clock();
+  float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+
+  /* verify correctness after reduction */
+  is_correct = fmm_alg_is_correct(&alg, 0 /* verbosity level */);
+  if (!is_correct) {
+    return 3;
+  }
+
+  /* print stats */
+  int t = a[0] + a[1] + a[2];
+  int tt = ra[0] + ra[1] + ra[2];
+  if (naive_add_count) {
+    *naive_add_count = t; // export naive addition count
+  }
+  if (reduced_add_count) {
+    *reduced_add_count = tt; // export reduced addition count
+  }
+  printf("%4d + %4d + %4d = %4d -> ", a[0], a[1], a[2], t);
+  printf("%4d + %4d + %4d = %4d", ra[0], ra[1], ra[2], tt);
+  printf(", saving %4d + %4d + %4d = %4d additions (%5.2f%%) [%.3f sec]", a[0] - ra[0], a[1] - ra[1], a[2] - ra[2], t - tt, 100*((double)t - tt)/t, seconds);
+
+  fflush(stdout);
+  fmm_alg_destroy(&alg);
+  return 0;
+}
+
+static int file_type(char *full_path) {
+  struct stat stbuf;
+  if ( stat(full_path, &stbuf ) == -1 ) {
+    return -1;
+  }
+  return (stbuf.st_mode & S_IFMT) == S_IFDIR; // 1 for directory, 0 for file
+}
+
+static int file_extension_supported(char *file_name, char **file_extensions, int num_file_extensions) {
+  char *p = strrchr(file_name, '.');
+  if (!p) {
+    return 0;
+  }
+  for (int i=0; i<num_file_extensions; i++) {
+    if (!strcmp(p+1, file_extensions[i])) { // if valid file extension
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int fmm_addition_reduction_batch(char *directory_path, reduction_method red, char **file_extensions, int num_file_extensions, const char *python_command) {
+  probability_distribution_int pd;
+  probability_distribution_init(&pd, 0 /* start_value */, 10000 /* num_items */);
+  char raw_reduction_data_file_name[256];
+  FILE *f = NULL; // raw reduction data output file
+  char heatmap_file_name[256];
+  struct dirent *d;
+  DIR *dir = opendir(directory_path);
+  if (!dir) {
+      fclose(f);
+      return 1; // cound not open given directory
+  }
+  int best_addition_count = INT_MAX;
+  int additions_before_reduction, additions_after_reduction;
+  int num_algorithms_processed = 0;
+  int k = -1, l = -1, m = -1;
+
+  while ((d = readdir(dir))) {
+    if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, "..")) {
+      continue;
+    }
+
+    /* get full path */
+    char full_path[512];
+    sprintf(full_path, "%s/%s", directory_path, d->d_name);
+
+    /* process file/folder entry */
+    int type = file_type(full_path); // file or folder?
+    if (type == -1) { // stat error
+      printf("%s: *** unable to stat file or folder ***\n", full_path);
+      continue;
+    }
+    if (type == 1) { // directory
+      //printf(" [dir] %s\n", full_path);
+      fmm_addition_reduction_batch(full_path, red, file_extensions, num_file_extensions, python_command); // recursive call to subdirectory
+      continue;
+    }
+
+    /* file, but check if file extension is supported */
+    if (!file_extension_supported(full_path, file_extensions, num_file_extensions)) {
+      //printf("[unsupported file extension] %s\n", d->d_name);
+      continue;
+    }
+
+    /* supported file type, now try to process it */
+    //printf("[file] %-50s: ", d->d_name);
+    printf("%-50s: ", d->d_name);
+    int ret;
+    switch (red) {
+    case reduction_method_greedy_vanilla:
+      ret = fmm_greedy_vanilla_one_liner(full_path, &additions_before_reduction, &additions_after_reduction);
+      break;
+    case reduction_method_greedy_potential:
+      ret = fmm_greedy_potential_one_liner(full_path, 0.0 /* alpha_start */, 0.5 /* alpha_end */, 50 /* alpha_num_steps */, &additions_before_reduction, &additions_after_reduction);
+      break;
+    default:
+      printf("\n");
+      continue;
+    }
+    const char *msg = "something unexpected happened with this file";
+    switch (ret) {
+      case 0:
+        /* get algorithm parameters from file to use in output file name(s) (same parameters for batches, so read from first file only) */
+        if (k == -1 || l == -1 || m == -1) {
+          fmm_alg alg;
+          int t_capacity = 10;
+          int read_error;
+          if (!(read_error = read_from_file(&alg, full_path, t_capacity, 0 /*VERBOSE_FILE_READ*/))) { // successfully read algorithm parameters
+            k = alg.k;
+            l = alg.l;
+            m = alg.m;
+          }
+        }
+        assert(k != -1 && l != -1 && m != -1 && "klm not extracted properly, maybe different algorithm dimensions are mixed in the batch?");
+        if (!f) {
+          sprintf(raw_reduction_data_file_name, "additions_before_and_after_reduction_%d%d%d.txt", k, l, m);
+          f = fopen(raw_reduction_data_file_name, "w");
+          if (!f) {
+            return 1; // cound not open output file for reduction stats
+          }
+          sprintf(heatmap_file_name, "heatmap_%d%d%d.png", k, l, m);
+        }
+        /* update statistics */
+        probability_distribution_add(&pd, additions_after_reduction, 1);
+        num_algorithms_processed++;
+        if (additions_after_reduction < best_addition_count) {
+          best_addition_count = additions_after_reduction;
+        }
+        fprintf(f, "%d %d\n", additions_before_reduction, additions_after_reduction);
+        break;
+      case 1: msg = "could not read algorithm from file"; break;
+      case 2: msg = "could read something from the file, but failed to verify algorithm correctness after reading (before reduction)"; break;
+      case 3: msg = "failed to verify algorithm correctness after reduction"; break;
+    }
+    if (ret) {
+      printf("*** error, %s ***", msg);
+    }
+    printf("\n");
+  }
+  closedir(dir);
+  fclose(f);
+
+  printf("\n");
+  printf("%d algorithms processed\n", num_algorithms_processed);
+  printf("best algorithm was reduced to %d additions\n", best_addition_count);
+  printf("\nProbability distribution:\n");
+  probability_distribution_print(&pd, "\n");
+  printf("\n\n");
+  char file_name[512];
+  char file_name_prefix[512];
+  if (k != -1 && l != -1 && m != -1) {
+  sprintf(file_name_prefix, "fmm_addition_distribution_%d%d%d", k, l, m);
+  } else {
+    sprintf(file_name_prefix, "fmm_addition_distribution");
+  }
+  /* addition distribution plot */
+  if (python_command) {
+    probability_distribution_python_plot(file_name, &pd, file_name_prefix, python_command);
+    printf("Saved probability distribution python plot to file %s\n", file_name);
+  }
+  probability_distribution_free(&pd);
+  /* addition reduction heatmap */
+  if (python_command) {
+    char command[512];
+    sprintf(command, "%s heatmap.py %s %s", python_command, heatmap_file_name, raw_reduction_data_file_name);
+    printf("Generating heatmap...");
+    system(command);
+    printf("saved to file %s\n", heatmap_file_name);
+  }
+  printf("Raw reduction data (additions before and after reduction) saved to file %s\n", raw_reduction_data_file_name);
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  return fmm_addition_reduction_on_single_algorithm(argc, argv);
+  //static char *file_extensions[] = {"txt", "exp", "m"};
+  //return fmm_addition_reduction_batch(".", reduction_method_greedy_vanilla, file_extensions, sizeof(file_extensions)/sizeof(char*), "python");
+  //return fmm_addition_reduction_batch(".", reduction_method_greedy_potential, file_extensions, sizeof(file_extensions)/sizeof(char*), "python");
 }

@@ -48,7 +48,7 @@ def snap_and_dump(WA: np.ndarray,
                   WC: np.ndarray) -> tuple[list[np.ndarray], str]:
     """
     Snap the weight matrices to {-1,0,1}, print Python literals PLUS a paste-ready
-    text block for werekorren/fmm_add_reduction.
+    text block for reduction.
 
     Returns
     -------

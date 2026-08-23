@@ -41,9 +41,11 @@ static int read_params_from_file_name(const char *file_name, int *zp, int *k, in
   name[name_len] = 0;
 
   /* get k, l, m */
-  *k = (int)(p[1] - '0');
-  *l = (int)(p[2] - '0');
-  *m = (int)(p[3] - '0');
+  if (sscanf(p + 1, "%dx%dx%d", k, l, m) != 3) {
+    *k = (int)(p[1] - '0');
+    *l = (int)(p[2] - '0');
+    *m = (int)(p[3] - '0');
+  }
 
   /* get q */
   char *pp = strchr(p + 1, '-');
